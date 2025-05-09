@@ -90,6 +90,9 @@
             border-radius: 10px;
             max-width: 800px;
             margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .hero h1 {
@@ -116,6 +119,8 @@
             font-size: 18px;
             transition: background 0.3s ease;
             font-family: 'Orbitron', sans-serif;
+            margin: 0 auto;
+            display: block;
         }
 
         #music-btn:hover {
@@ -211,6 +216,7 @@
             border-radius: 10px;
             margin: 30px auto;
             max-width: 1200px;
+            text-align: center;
         }
 
         .events-table table {
@@ -240,6 +246,12 @@
 
         .events-table tr:hover {
             background-color: #333;
+        }
+
+        /* Add Event Button */
+        #addEventBtn {
+            margin: 0 auto;
+            display: block;
         }
 
         /* REGISTER SECTION */
@@ -664,16 +676,24 @@
         </form>
     </section>
 
-    <!-- CONTACT SECTION -->
-    <section id="contact" class="contact">
-        <h2>Contact Us</h2>
-        <form>
-            <input type="text" placeholder="Your Name" required>
-            <input type="email" placeholder="Your Email" required>
-            <textarea placeholder="Your Message" rows="5" required></textarea>
-            <button type="submit">Send</button>
+<!-- SECCIÓN CONTACTO COMPLETA (Copia y pega esto) -->
+<section id="contact" class="contact-section">
+    <div class="contact-wrapper">
+        <h2 class="contact-title">Contact Us</h2>
+        <form class="contact-form">
+            <div class="form-row">
+                <input type="text" class="contact-input" placeholder="Your Name" required>
+            </div>
+            <div class="form-row">
+                <input type="email" class="contact-input" placeholder="Your Email" required>
+            </div>
+            <div class="form-row">
+                <textarea class="contact-textarea" placeholder="Your Message" required></textarea>
+            </div>
+            <button type="submit" class="contact-submit">Send Message</button>
         </form>
-    </section>
+    </div>
+</section>
 
     <!-- FOOTER -->
     <footer>
