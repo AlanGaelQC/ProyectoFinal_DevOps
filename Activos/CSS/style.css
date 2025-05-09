@@ -782,11 +782,12 @@ footer.animate {
     transform: translateY(0);
 }
 
-/* ESTILOS PARA CONTACTO (Copia y pega esto al final de tu CSS) */
+/* ===== ESTILOS ACTUALIZADOS ===== */
 .contact-section {
-    background-color: #1a1a1a;
+    background-color: #111;
     padding: 80px 20px;
     position: relative;
+    font-family: 'Orbitron', sans-serif;
 }
 
 .contact-wrapper {
@@ -816,7 +817,8 @@ footer.animate {
     width: 100%;
 }
 
-.contact-input, .contact-textarea {
+.contact-input, 
+.contact-textarea {
     width: 100%;
     padding: 15px;
     background: #333;
@@ -825,13 +827,13 @@ footer.animate {
     color: white;
     font-family: 'Orbitron', sans-serif;
     font-size: 16px;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
 }
 
-.contact-input:focus, .contact-textarea:focus {
+.contact-input:focus, 
+.contact-textarea:focus {
     outline: none;
     border-color: #ff4d00;
-    background: #3a3a3a;
     box-shadow: 0 0 15px rgba(255, 77, 0, 0.3);
 }
 
@@ -848,7 +850,7 @@ footer.animate {
     font-size: 18px;
     border-radius: 5px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
     font-family: 'Orbitron', sans-serif;
     width: 100%;
     margin-top: 10px;
@@ -859,7 +861,6 @@ footer.animate {
     transform: translateY(-3px);
     box-shadow: 0 10px 20px rgba(255, 77, 0, 0.3);
 }
-
 /* Responsive para móviles */
 @media (max-width: 768px) {
     .contact-wrapper {

@@ -309,49 +309,83 @@
         }
 
         /* CONTACT SECTION */
-        .contact {
+        .contact-section {
             background-color: #111;
-            padding: 50px 40px;
-            text-align: center;
+            padding: 80px 20px;
+            position: relative;
+            font-family: 'Orbitron', sans-serif;
         }
 
-        .contact h2 {
-            margin-bottom: 25px;
+        .contact-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #222;
+            padding: 40px;
+            border-radius: 10px;
+            border: 1px solid #ff4d00;
+            box-shadow: 0 0 30px rgba(255, 77, 0, 0.2);
+        }
+
+        .contact-title {
             color: #ff4d00;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
         }
 
-        .contact form {
+        .contact-form {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            max-width: 500px;
-            margin: 0 auto;
+            gap: 25px;
         }
 
-        .contact input, .contact textarea {
+        .form-row {
             width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            font-size: 16px;
-            font-family: 'Orbitron', sans-serif;
         }
 
-        .contact button {
-            padding: 10px 30px;
-            background-color: #ff4d00;
+        .contact-input, 
+        .contact-textarea {
+            width: 100%;
+            padding: 15px;
+            background: #333;
+            border: 2px solid #444;
+            border-radius: 5px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .contact-input:focus, 
+        .contact-textarea:focus {
+            outline: none;
+            border-color: #ff4d00;
+            box-shadow: 0 0 15px rgba(255, 77, 0, 0.3);
+        }
+
+        .contact-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .contact-submit {
+            background: #ff4d00;
             color: white;
             border: none;
-            border-radius: 8px;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
+            transition: all 0.3s;
             font-family: 'Orbitron', sans-serif;
-            transition: background 0.3s;
+            width: 100%;
+            margin-top: 10px;
         }
 
-        .contact button:hover {
-            background-color: #e63e00;
+        .contact-submit:hover {
+            background: #e63e00;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(255, 77, 0, 0.3);
         }
 
         /* FOOTER */
@@ -569,6 +603,15 @@
                 gap: 10px;
                 align-items: center;
             }
+
+            /* Contacto responsive */
+            .contact-wrapper {
+                padding: 30px 20px;
+            }
+            
+            .contact-title {
+                font-size: 1.8rem;
+            }
         }
 
         @media (max-width: 480px) {
@@ -676,24 +719,24 @@
         </form>
     </section>
 
-<!-- SECCIÓN CONTACTO COMPLETA (Copia y pega esto) -->
-<section id="contact" class="contact-section">
-    <div class="contact-wrapper">
-        <h2 class="contact-title">Contact Us</h2>
-        <form class="contact-form">
-            <div class="form-row">
-                <input type="text" class="contact-input" placeholder="Your Name" required>
-            </div>
-            <div class="form-row">
-                <input type="email" class="contact-input" placeholder="Your Email" required>
-            </div>
-            <div class="form-row">
-                <textarea class="contact-textarea" placeholder="Your Message" required></textarea>
-            </div>
-            <button type="submit" class="contact-submit">Send Message</button>
-        </form>
-    </div>
-</section>
+    <!-- SECCIÓN CONTACTO CORREGIDA -->
+    <section id="contact" class="contact-section">
+        <div class="contact-wrapper">
+            <h2 class="contact-title">Contact Us</h2>
+            <form class="contact-form">
+                <div class="form-row">
+                    <input type="text" class="contact-input" placeholder="Your Name" required>
+                </div>
+                <div class="form-row">
+                    <input type="email" class="contact-input" placeholder="Your Email" required>
+                </div>
+                <div class="form-row">
+                    <textarea class="contact-textarea" placeholder="Your Message" required></textarea>
+                </div>
+                <button type="submit" class="contact-submit">Send Message</button>
+            </form>
+        </div>
+    </section>
 
     <!-- FOOTER -->
     <footer>
@@ -1103,7 +1146,7 @@
                 });
             }, { threshold: 0.1 });
 
-            document.querySelectorAll('.race, .contact, footer, .hero-content, .register-form, .events-table').forEach(el => {
+            document.querySelectorAll('.race, .contact-section, footer, .hero-content, .register-form, .events-table').forEach(el => {
                 el.style.opacity = '0';
                 el.style.transform = 'translateY(20px)';
                 el.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
