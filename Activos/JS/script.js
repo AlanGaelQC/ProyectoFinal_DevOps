@@ -5,14 +5,14 @@ const API_URL = 'http://52.5.101.7:3000/eventos';
 const MUSIC_VOLUME = 0.3;
 const DEBOUNCE_DELAY = 300;
 
-// Configuración de Firebase (REEMPLAZA CON TUS DATOS)
+// Configuración de Firebase (REEMPLAZA CON TUS DATOS REALES)
 const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_PROYECTO.firebaseapp.com",
-    projectId: "TU_PROYECTO",
-    storageBucket: "TU_PROYECTO.appspot.com",
-    messagingSenderId: "TU_SENDER_ID",
-    appId: "TU_APP_ID"
+    apiKey: "TU_API_KEY_REAL",
+    authDomain: "TU_PROYECTO_REAL.firebaseapp.com",
+    projectId: "TU_PROYECTO_REAL",
+    storageBucket: "TU_PROYECTO_REAL.appspot.com",
+    messagingSenderId: "TU_SENDER_ID_REAL",
+    appId: "TU_APP_ID_REAL"
 };
 
 // ==============================================
@@ -22,6 +22,7 @@ let currentEventId = null;
 let isPlaying = false;
 let musicEnabled = false;
 let cart = []; // Para el sistema de carrito
+let currentUser = null; // Para manejar el estado del usuario
 
 // ==============================================
 //                INICIALIZACIÓN
@@ -37,14 +38,18 @@ document.addEventListener('DOMContentLoaded', () => {
     initModal();
     initAnimations();
     setupEventListeners();
-    initStore(); // Inicializar la tienda/carrito
+    initStore();
     
     // Escuchar cambios de autenticación
     auth.onAuthStateChanged(user => {
         if (user) {
             console.log("Usuario logueado:", user.email);
+            currentUser = user;
+            updateAuthUI(user);
         } else {
             console.log("Usuario no logueado");
+            currentUser = null;
+            updateAuthUI(null);
         }
     });
 });
@@ -100,7 +105,7 @@ function updateMusicButton() {
 }
 
 // ==============================================
-//                AUTENTICACIÓN
+//                AUTENTICACIÓN MEJORADA
 // ==============================================
 async function handleRegisterForm(e) {
     e.preventDefault();
@@ -108,6 +113,22 @@ async function handleRegisterForm(e) {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
     const name = document.getElementById('name').value.trim();
+
+    // Validaciones adicionales
+    if (!validateEmail(email)) {
+        showNotification('Por favor ingresa un email válido', 'error');
+        return;
+    }
+
+    if (password.length < 6) {
+        showNotification('La contraseña debe tener al menos 6 caracteres', 'error');
+        return;
+    }
+
+    if (name.length < 3) {
+        showNotification('El nombre debe tener al menos 3 caracteres', 'error');
+        return;
+    }
 
     try {
         showLoading('Creando cuenta...');
@@ -119,14 +140,58 @@ async function handleRegisterForm(e) {
         await db.collection('users').doc(userCredential.user.uid).set({
             name: name,
             email: email,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            role: 'user',
+            ticketsPurchased: 0
         });
         
-        showNotification('¡Registro exitoso!', 'success');
+        showNotification(`¡Registro exitoso! Bienvenido ${name}`, 'success');
         document.getElementById('registerForm').reset();
+        
     } catch (error) {
         console.error('Error en registro:', error);
         showNotification(getAuthErrorMessage(error.code), 'error');
+    }
+}
+
+function updateAuthUI(user) {
+    const navLinks = document.querySelector('.nav-links');
+    const authLinks = document.getElementById('auth-links') || document.createElement('div');
+    authLinks.id = 'auth-links';
+    
+    if (user) {
+        // Usuario logueado
+        authLinks.innerHTML = `
+            <li><a href="#profile">Mi Perfil</a></li>
+            <li><a href="#" id="logout-link">Cerrar Sesión</a></li>
+        `;
+        document.getElementById('logout-link')?.addEventListener('click', handleLogout);
+    } else {
+        // Usuario no logueado
+        authLinks.innerHTML = `
+            <li><a href="#register">Registrarse</a></li>
+            <li><a href="#login">Iniciar Sesión</a></li>
+        `;
+    }
+    
+    // Reemplazar solo los enlaces de autenticación
+    const existingAuthLinks = document.getElementById('auth-links');
+    if (existingAuthLinks) {
+        existingAuthLinks.replaceWith(authLinks);
+    } else {
+        navLinks.appendChild(authLinks);
+    }
+}
+
+async function handleLogout() {
+    try {
+        await firebase.auth().signOut();
+        showNotification('Sesión cerrada correctamente', 'success');
+        cart = []; // Vaciar carrito al cerrar sesión
+        updateCartUI();
+    } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+        showNotification('Error al cerrar sesión', 'error');
     }
 }
 
@@ -136,20 +201,25 @@ function getAuthErrorMessage(errorCode) {
         'auth/invalid-email': 'Email no válido',
         'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres',
         'auth/user-not-found': 'Usuario no encontrado',
-        'auth/wrong-password': 'Contraseña incorrecta'
+        'auth/wrong-password': 'Contraseña incorrecta',
+        'auth/too-many-requests': 'Demasiados intentos. Intenta más tarde',
+        'auth/network-request-failed': 'Error de conexión. Verifica tu internet'
     };
     return messages[errorCode] || 'Ocurrió un error inesperado';
 }
 
 // ==============================================
-//                CRUD DE EVENTOS (FIRESTORE)
+//                CRUD DE EVENTOS MEJORADO
 // ==============================================
 async function loadEvents() {
     showLoading('Cargando eventos...');
     
     try {
         const db = firebase.firestore();
-        const snapshot = await db.collection('events').get();
+        const snapshot = await db.collection('events')
+            .orderBy('createdAt', 'desc')
+            .get();
+            
         const events = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
@@ -164,60 +234,98 @@ async function loadEvents() {
 
 async function createEvent(eventData) {
     try {
+        // Validación adicional
+        if (!eventData.nombre || eventData.nombre.length < 3) {
+            throw new Error('El nombre del evento debe tener al menos 3 caracteres');
+        }
+
+        if (!currentUser) {
+            throw new Error('Debes iniciar sesión para crear eventos');
+        }
+
         showLoading('Creando evento...');
         const db = firebase.firestore();
         const docRef = await db.collection('events').add({
             ...eventData,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            createdBy: firebase.auth().currentUser?.uid || 'anonymous'
+            createdBy: currentUser.uid,
+            createdByName: currentUser.displayName || currentUser.email,
+            attendees: [],
+            ticketsSold: 0,
+            status: 'active'
         });
         
         showNotification('Evento creado con éxito', 'success');
         return { id: docRef.id, ...eventData };
     } catch (error) {
         console.error('Error creando evento:', error);
-        showNotification('Error al crear evento', 'error');
+        showNotification(error.message || 'Error al crear evento', 'error');
         throw error;
     }
 }
 
 async function updateEvent(eventId, eventData) {
     try {
+        if (!currentUser) {
+            throw new Error('Debes iniciar sesión para actualizar eventos');
+        }
+
         showLoading('Actualizando evento...');
         const db = firebase.firestore();
+        
+        // Verificar que el usuario es el creador del evento
+        const eventDoc = await db.collection('events').doc(eventId).get();
+        if (eventDoc.data().createdBy !== currentUser.uid && currentUser.uid !== 'ADMIN_UID') {
+            throw new Error('No tienes permiso para editar este evento');
+        }
+
         await db.collection('events').doc(eventId).update(eventData);
         
         showNotification('Evento actualizado', 'success');
         return { id: eventId, ...eventData };
     } catch (error) {
         console.error('Error actualizando evento:', error);
-        showNotification('Error al actualizar evento', 'error');
+        showNotification(error.message || 'Error al actualizar evento', 'error');
         throw error;
     }
 }
 
 async function deleteEvent(eventId) {
     try {
-        showLoading('Eliminando evento...');
+        if (!currentUser) {
+            throw new Error('Debes iniciar sesión para eliminar eventos');
+        }
+
         const db = firebase.firestore();
+        const eventDoc = await db.collection('events').doc(eventId).get();
+        
+        // Verificar que el usuario es el creador del evento
+        if (eventDoc.data().createdBy !== currentUser.uid && currentUser.uid !== 'ADMIN_UID') {
+            throw new Error('No tienes permiso para eliminar este evento');
+        }
+
+        if (!confirm(`¿Eliminar permanentemente el evento "${eventDoc.data().nombre}"?`)) return;
+        
+        showLoading('Eliminando evento...');
         await db.collection('events').doc(eventId).delete();
         
         showNotification('Evento eliminado', 'success');
         return true;
     } catch (error) {
         console.error('Error eliminando evento:', error);
-        showNotification('Error al eliminar evento', 'error');
+        showNotification(error.message || 'Error al eliminar evento', 'error');
         throw error;
     }
 }
 
 // ==============================================
-//                SISTEMA DE CARRITO
+//                SISTEMA DE CARRITO MEJORADO
 // ==============================================
 function initStore() {
     renderTickets();
     updateCartUI();
     
+    // Usar delegación de eventos para mejor performance
     document.addEventListener('click', (e) => {
         if (e.target.classList.contains('add-to-cart')) {
             const ticketId = e.target.dataset.id;
@@ -263,12 +371,40 @@ function renderTickets() {
 
 function addToCart(ticketId) {
     const tickets = {
-        general: { name: 'Entrada General', price: 50, id: 'general' },
-        vip: { name: 'Entrada VIP', price: 120, id: 'vip' },
-        season: { name: 'Pase de Temporada', price: 300, id: 'season' }
+        general: { 
+            name: 'Entrada General', 
+            price: 50, 
+            id: 'general',
+            type: 'general',
+            eventId: 'default-event'
+        },
+        vip: { 
+            name: 'Entrada VIP', 
+            price: 120, 
+            id: 'vip',
+            type: 'vip',
+            eventId: 'default-event'
+        },
+        season: { 
+            name: 'Pase de Temporada', 
+            price: 300, 
+            id: 'season',
+            type: 'season',
+            eventId: 'default-event'
+        }
     };
     
-    cart.push(tickets[ticketId]);
+    // Verificar si el ticket ya está en el carrito
+    const existingItem = cart.find(item => item.id === ticketId);
+    if (existingItem) {
+        existingItem.quantity = (existingItem.quantity || 1) + 1;
+    } else {
+        cart.push({
+            ...tickets[ticketId],
+            quantity: 1
+        });
+    }
+    
     updateCartUI();
     showNotification(`${tickets[ticketId].name} añadida al carrito`, 'success');
 }
@@ -276,7 +412,11 @@ function addToCart(ticketId) {
 function removeFromCart(ticketId) {
     const index = cart.findIndex(item => item.id === ticketId);
     if (index !== -1) {
-        cart.splice(index, 1);
+        if (cart[index].quantity > 1) {
+            cart[index].quantity -= 1;
+        } else {
+            cart.splice(index, 1);
+        }
         updateCartUI();
     }
 }
@@ -288,32 +428,86 @@ function updateCartUI() {
     
     if (!cartItemsEl || !cartCountEl || !cartTotalEl) return;
     
-    const itemCounts = {};
-    cart.forEach(item => {
-        itemCounts[item.name] = (itemCounts[item.name] || 0) + 1;
-    });
+    cartItemsEl.innerHTML = cart.map(item => `
+        <div class="cart-item">
+            <span>${item.name} x${item.quantity} - $${(item.price * item.quantity).toFixed(2)}</span>
+            <button class="remove-from-cart" data-id="${item.id}">Eliminar</button>
+        </div>
+    `).join('');
     
-    cartItemsEl.innerHTML = Object.entries(itemCounts)
-        .map(([name, count]) => `
-            <div class="cart-item">
-                <span>${name} x${count}</span>
-                <button class="remove-from-cart" data-id="${name.toLowerCase().replace(' ', '-')}">Eliminar</button>
-            </div>
-        `).join('');
+    const totalCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    cartCountEl.textContent = totalCount;
     
-    cartCountEl.textContent = cart.length;
-    const total = cart.reduce((sum, item) => sum + item.price, 0);
+    const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
     cartTotalEl.textContent = total.toFixed(2);
 }
 
-function proceedToCheckout() {
+async function proceedToCheckout() {
     if (cart.length === 0) {
         showNotification('El carrito está vacío', 'warning');
         return;
     }
     
-    showNotification('Redirigiendo a pasarela de pago...', 'info');
-    // Aquí iría la integración con Stripe/PayPal en un entorno real
+    if (!currentUser) {
+        showNotification('Debes iniciar sesión para realizar una compra', 'warning');
+        return;
+    }
+    
+    try {
+        showLoading('Procesando pago...');
+        
+        // Simulación de pago exitoso
+        const db = firebase.firestore();
+        const batch = db.batch();
+        const orderRef = db.collection('orders').doc();
+        
+        // Crear orden
+        const orderData = {
+            userId: currentUser.uid,
+            userEmail: currentUser.email,
+            items: cart,
+            total: cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0),
+            status: 'completed',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            paymentMethod: 'simulated'
+        };
+        
+        batch.set(orderRef, orderData);
+        
+        // Actualizar contadores de eventos
+        cart.forEach(item => {
+            if (item.eventId) {
+                const eventRef = db.collection('events').doc(item.eventId);
+                batch.update(eventRef, {
+                    ticketsSold: firebase.firestore.FieldValue.increment(item.quantity || 1),
+                    attendees: firebase.firestore.FieldValue.arrayUnion({
+                        userId: currentUser.uid,
+                        ticketType: item.type,
+                        purchaseDate: new Date(),
+                        orderId: orderRef.id
+                    })
+                });
+            }
+        });
+        
+        // Actualizar perfil de usuario
+        const userRef = db.collection('users').doc(currentUser.uid);
+        batch.update(userRef, {
+            ticketsPurchased: firebase.firestore.FieldValue.increment(
+                cart.reduce((sum, item) => sum + (item.quantity || 1), 0)
+            )
+        });
+        
+        await batch.commit();
+        
+        showNotification('¡Compra exitosa! Recibirás un email con tus entradas', 'success');
+        cart = [];
+        updateCartUI();
+        
+    } catch (error) {
+        console.error('Error en el checkout:', error);
+        showNotification('Error al procesar el pago: ' + error.message, 'error');
+    }
 }
 
 // ==============================================
@@ -372,8 +566,6 @@ async function handleDeleteEvent(e) {
     const eventName = e.target.closest('.race')?.querySelector('h2')?.textContent || 
                      e.target.closest('tr')?.querySelector('td:first-child')?.textContent;
     
-    if (!confirm(`¿Eliminar permanentemente el evento "${eventName}"?`)) return;
-    
     try {
         await deleteEvent(eventId);
         
@@ -402,6 +594,11 @@ function initModal() {
     
     if (addEventBtn) {
         addEventBtn.addEventListener('click', () => {
+            if (!currentUser) {
+                showNotification('Debes iniciar sesión para crear eventos', 'warning');
+                return;
+            }
+            
             currentEventId = null;
             document.getElementById('modalTitle').textContent = 'Crear Nuevo Evento';
             eventForm.reset();
@@ -448,13 +645,13 @@ function initModal() {
 }
 
 function validateEventForm(eventData) {
-    if (!eventData.nombre) {
-        showNotification('El nombre del evento es obligatorio', 'warning');
+    if (!eventData.nombre || eventData.nombre.length < 3) {
+        showNotification('El nombre del evento es obligatorio (mínimo 3 caracteres)', 'warning');
         return false;
     }
 
-    if (!eventData.descripcion) {
-        showNotification('La descripción del evento es obligatoria', 'warning');
+    if (!eventData.descripcion || eventData.descripcion.length < 10) {
+        showNotification('La descripción del evento es obligatoria (mínimo 10 caracteres)', 'warning');
         return false;
     }
 
@@ -512,8 +709,11 @@ function renderEvents(events) {
                 <h2>${event.nombre}</h2>
                 <p>${event.descripcion}</p>
                 <div class="race-actions">
-                    <button class="edit-btn" data-id="${event.id}">✏️ Editar</button>
-                    <button class="delete-btn" data-id="${event.id}">🗑️ Eliminar</button>
+                    ${currentUser && (currentUser.uid === event.createdBy || currentUser.uid === 'ADMIN_UID') ? `
+                        <button class="edit-btn" data-id="${event.id}">✏️ Editar</button>
+                        <button class="delete-btn" data-id="${event.id}">🗑️ Eliminar</button>
+                    ` : ''}
+                    <button class="btn-primary" onclick="location.href='#store'">Comprar Entradas</button>
                 </div>
             </div>
         `;
@@ -533,8 +733,10 @@ function renderEvents(events) {
                     'Sin imagen'}
             </td>
             <td class="actions-cell">
-                <button class="edit-btn" data-id="${event.id}">Editar</button>
-                <button class="delete-btn" data-id="${event.id}">Eliminar</button>
+                ${currentUser && (currentUser.uid === event.createdBy || currentUser.uid === 'ADMIN_UID') ? `
+                    <button class="edit-btn" data-id="${event.id}">Editar</button>
+                    <button class="delete-btn" data-id="${event.id}">Eliminar</button>
+                ` : 'No tienes permisos'}
             </td>
         `;
         
@@ -575,7 +777,31 @@ function showNotification(message, type = 'info') {
 }
 
 function showLoading(message) {
-    console.log(message); // En producción podrías mostrar un spinner
+    // En producción podrías mostrar un spinner
+    console.log(message);
+    const loading = document.getElementById('loading') || document.createElement('div');
+    loading.id = 'loading';
+    loading.textContent = message;
+    loading.style.position = 'fixed';
+    loading.style.top = '50%';
+    loading.style.left = '50%';
+    loading.style.transform = 'translate(-50%, -50%)';
+    loading.style.backgroundColor = 'rgba(0,0,0,0.8)';
+    loading.style.color = 'white';
+    loading.style.padding = '20px';
+    loading.style.borderRadius = '5px';
+    loading.style.zIndex = '1000';
+    
+    if (!document.getElementById('loading')) {
+        document.body.appendChild(loading);
+    }
+}
+
+function hideLoading() {
+    const loading = document.getElementById('loading');
+    if (loading) {
+        loading.remove();
+    }
 }
 
 // ==============================================
