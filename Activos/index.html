@@ -1,11 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Born to Race</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <style>
         /* RESET Y BASE */
         * {
@@ -308,84 +312,115 @@
             background-color: #e63e00;
         }
 
-        /* CONTACT SECTION */
-        .contact-section {
-            background-color: #111;
-            padding: 80px 20px;
-            position: relative;
-            font-family: 'Orbitron', sans-serif;
+        /* STORE SECTION */
+        .store-section {
+            background-color: #1a1a1a;
+            padding: 5rem 2rem;
         }
 
-        .contact-wrapper {
-            max-width: 600px;
+        .store-wrapper {
+            max-width: 1200px;
             margin: 0 auto;
             background: #222;
-            padding: 40px;
+            padding: 3rem;
             border-radius: 10px;
             border: 1px solid #ff4d00;
             box-shadow: 0 0 30px rgba(255, 77, 0, 0.2);
         }
 
-        .contact-title {
+        .store-title {
             color: #ff4d00;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 3rem;
             font-size: 2.2rem;
         }
 
-        .contact-form {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
+        .tickets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
         }
 
-        .form-row {
-            width: 100%;
-        }
-
-        .contact-input, 
-        .contact-textarea {
-            width: 100%;
-            padding: 15px;
+        .ticket-card {
             background: #333;
-            border: 2px solid #444;
-            border-radius: 5px;
-            color: white;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 16px;
-            transition: all 0.3s;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #444;
+            transition: all 0.3s ease;
         }
 
-        .contact-input:focus, 
-        .contact-textarea:focus {
-            outline: none;
-            border-color: #ff4d00;
-            box-shadow: 0 0 15px rgba(255, 77, 0, 0.3);
+        .ticket-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 77, 0, 0.2);
         }
 
-        .contact-textarea {
-            min-height: 150px;
-            resize: vertical;
+        .ticket-price {
+            font-size: 1.5rem;
+            color: #ff4d00;
+            margin: 1rem 0;
+            font-weight: bold;
         }
 
-        .contact-submit {
+        .add-to-cart {
+            width: 100%;
+            padding: 0.8rem;
             background: #ff4d00;
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 18px;
             border-radius: 5px;
             cursor: pointer;
-            transition: all 0.3s;
             font-family: 'Orbitron', sans-serif;
-            width: 100%;
-            margin-top: 10px;
+            transition: all 0.3s ease;
         }
 
-        .contact-submit:hover {
+        .add-to-cart:hover {
             background: #e63e00;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(255, 77, 0, 0.3);
+        }
+
+        .cart-container {
+            background: #333;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #444;
+        }
+
+        .remove-from-cart {
+            background: transparent;
+            color: #ff4d00;
+            border: none;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .cart-total {
+            text-align: right;
+            font-size: 1.2rem;
+            margin: 1rem 0;
+            font-weight: bold;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 1rem;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checkout-btn:hover {
+            background: #3e8e41;
         }
 
         /* FOOTER */
@@ -604,12 +639,11 @@
                 align-items: center;
             }
 
-            /* Contacto responsive */
-            .contact-wrapper {
+            .store-wrapper {
                 padding: 30px 20px;
             }
             
-            .contact-title {
+            .store-title {
                 font-size: 1.8rem;
             }
         }
@@ -636,7 +670,7 @@
             <li><a href="#hero">Home</a></li>
             <li><a href="#races">Races</a></li>
             <li><a href="#register">Register</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li><a href="#store">Tickets</a></li>
         </ul>
     </nav>
 
@@ -713,28 +747,29 @@
             </div>
             <div class="form-group">
                 <label for="password">Password:</label>
-                <input type="password" id="password" placeholder="Create a password" minlength="8" required>
+                <input type="password" id="password" placeholder="Create a password" minlength="6" required>
             </div>
             <button type="submit" class="submit-btn">Create Account</button>
         </form>
     </section>
 
-    <!-- SECCIÓN CONTACTO CORREGIDA -->
-    <section id="contact" class="contact-section">
-        <div class="contact-wrapper">
-            <h2 class="contact-title">Contact Us</h2>
-            <form class="contact-form">
-                <div class="form-row">
-                    <input type="text" class="contact-input" placeholder="Your Name" required>
+    <!-- STORE SECTION -->
+    <section id="store" class="store-section">
+        <div class="store-wrapper">
+            <h2 class="store-title">Compra tus Entradas</h2>
+            
+            <div class="tickets-grid" id="ticketsContainer">
+                <!-- Tickets se cargarán dinámicamente -->
+            </div>
+            
+            <div class="cart-container">
+                <h3>Tu Carrito <span id="cartCount">0</span></h3>
+                <div id="cartItems"></div>
+                <div class="cart-total">
+                    Total: $<span id="cartTotal">0.00</span>
                 </div>
-                <div class="form-row">
-                    <input type="email" class="contact-input" placeholder="Your Email" required>
-                </div>
-                <div class="form-row">
-                    <textarea class="contact-textarea" placeholder="Your Message" required></textarea>
-                </div>
-                <button type="submit" class="contact-submit">Send Message</button>
-            </form>
+                <button id="checkoutBtn" class="checkout-btn">Proceder al Pago</button>
+            </div>
         </div>
     </section>
 
@@ -774,318 +809,370 @@
 
     <!-- JAVASCRIPT -->
     <script>
-        // script.js - Versión Final Optimizada para Born to Race
-
         // ==============================================
         //                CONSTANTES
         // ==============================================
-        const API_URL = 'http://52.5.101.7:3000/eventos';
-        const MUSIC_VOLUME = 0.3; // 30% de volumen
+        const MUSIC_VOLUME = 0.3;
+        const DEBOUNCE_DELAY = 300;
+
+        // Configuración de Firebase (REEMPLAZA CON TUS DATOS)
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_PROYECTO.firebaseapp.com",
+            projectId: "TU_PROYECTO",
+            storageBucket: "TU_PROYECTO.appspot.com",
+            messagingSenderId: "TU_SENDER_ID",
+            appId: "TU_APP_ID"
+        };
 
         // ==============================================
-        //                   MÚSICA
+        //                VARIABLES GLOBALES
         // ==============================================
-        const music = document.getElementById('bg-music');
-        const musicBtn = document.getElementById('music-btn');
-        music.volume = MUSIC_VOLUME;
+        let currentEventId = null;
+        let isPlaying = false;
+        let musicEnabled = false;
+        let cart = [];
 
-        // Desbloqueo de audio en primera interacción
+        // ==============================================
+        //                INICIALIZACIÓN
+        // ==============================================
         document.addEventListener('DOMContentLoaded', () => {
-            document.body.addEventListener('click', initAudio, { once: true });
+            // Inicializar Firebase
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+            const auth = firebase.auth();
+            
+            initAudio();
             loadEvents();
             initModal();
             initAnimations();
+            setupEventListeners();
+            initStore();
+            
+            // Escuchar cambios de autenticación
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    console.log("Usuario logueado:", user.email);
+                } else {
+                    console.log("Usuario no logueado");
+                }
+            });
         });
 
+        // ==============================================
+        //                MANEJO DE AUDIO
+        // ==============================================
         function initAudio() {
-            music.play()
-                .then(() => {
-                    music.pause(); // Solo para desbloquear
-                    music.currentTime = 0;
-                    updateMusicButton();
-                })
-                .catch(err => console.log('Audio error:', err));
+            const music = document.getElementById('bg-music');
+            music.volume = MUSIC_VOLUME;
+            
+            document.body.addEventListener('click', () => {
+                if (!musicEnabled) {
+                    music.play()
+                        .then(() => {
+                            music.pause();
+                            music.currentTime = 0;
+                            musicEnabled = true;
+                            updateMusicButton();
+                        })
+                        .catch(console.error);
+                }
+            }, { once: true });
         }
 
-        function updateMusicButton() {
-            musicBtn.innerHTML = music.paused 
-                ? '🎵 <span class="btn-text">Reproducir Música</span>' 
-                : '⏸ <span class="btn-text">Pausar Música</span>';
-        }
+        function toggleMusic() {
+            const music = document.getElementById('bg-music');
+            if (!musicEnabled) {
+                showNotification('Haz clic en la página primero para activar el audio', 'warning');
+                return;
+            }
 
-        musicBtn.addEventListener('click', () => {
             if (music.paused) {
                 music.play().catch(err => {
                     console.error('Error al reproducir:', err);
-                    showNotification('Haz clic en la página primero para activar el audio', 'warning');
+                    showNotification('Error al reproducir música', 'error');
                 });
             } else {
                 music.pause();
             }
             updateMusicButton();
-        });
-
-        // ==============================================
-        //                FORMULARIO CRUD
-        // ==============================================
-        document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const name = document.getElementById('name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-
-            // Validación básica
-            if (!name || !email || !password) {
-                showNotification('Todos los campos son obligatorios', 'warning');
-                return;
-            }
-
-            if (!validateEmail(email)) {
-                showNotification('Por favor ingresa un email válido', 'warning');
-                return;
-            }
-
-            if (password.length < 8) {
-                showNotification('La contraseña debe tener al menos 8 caracteres', 'warning');
-                return;
-            }
-
-            const user = { name, email, password };
-
-            try {
-                showNotification('Registrando usuario...', 'info');
-                
-                const response = await fetch('https://TU_API_GATEWAY.execute-api.region.amazonaws.com/prod/register', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer tu_token_si_es_necesario'
-                    },
-                    body: JSON.stringify(user)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Error en el servidor');
-                }
-                
-                const data = await response.json();
-                showNotification(data.message || '¡Registro exitoso!', 'success');
-                document.getElementById('registerForm').reset();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('Error en el registro: ' + error.message, 'error');
-            }
-        });
-
-        // ==============================================
-        //              MANEJO DE EVENTOS CRUD
-        // ==============================================
-        let currentEventId = null;
-        const eventModal = document.getElementById('eventModal');
-        const eventForm = document.getElementById('eventForm');
-        const modalTitle = document.getElementById('modalTitle');
-        const addEventBtn = document.getElementById('addEventBtn');
-
-        function initModal() {
-            // Botón para abrir modal de nuevo evento
-            addEventBtn?.addEventListener('click', () => {
-                currentEventId = null;
-                modalTitle.textContent = 'Crear Nuevo Evento';
-                eventForm.reset();
-                eventModal.style.display = 'block';
-            });
-
-            // Cerrar modal
-            document.querySelector('.closeBtn')?.addEventListener('click', () => {
-                eventModal.style.display = 'none';
-            });
-
-            // Cerrar al hacer clic fuera del modal
-            window.addEventListener('click', (e) => {
-                if (e.target === eventModal) {
-                    eventModal.style.display = 'none';
-                }
-            });
-
-            // Envío del formulario de evento
-            eventForm?.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const eventData = {
-                    nombre: document.getElementById('eventName').value.trim(),
-                    descripcion: document.getElementById('eventDescription').value.trim(),
-                    imagen_url: document.getElementById('eventImage').value.trim()
-                };
-
-                if (!eventData.nombre || !eventData.descripcion) {
-                    showNotification('Nombre y descripción son obligatorios', 'warning');
-                    return;
-                }
-
-                try {
-                    if (currentEventId) {
-                        // Actualizar evento existente
-                        await updateEvent(currentEventId, eventData);
-                    } else {
-                        // Crear nuevo evento
-                        await createEvent(eventData);
-                    }
-                    
-                    eventModal.style.display = 'none';
-                    loadEvents(); // Recargar lista de eventos
-                } catch (error) {
-                    console.error('Error:', error);
-                    showNotification('Error al guardar el evento: ' + error.message, 'error');
-                }
-            });
         }
 
-        async function loadEvents() {
+        function updateMusicButton() {
+            const musicBtn = document.getElementById('music-btn');
+            const music = document.getElementById('bg-music');
+            
+            if (music.paused) {
+                musicBtn.innerHTML = '🎵 <span class="btn-text">Reproducir Música</span>';
+            } else {
+                musicBtn.innerHTML = '⏸ <span class="btn-text">Pausar Música</span>';
+            }
+        }
+
+        // ==============================================
+        //                AUTENTICACIÓN
+        // ==============================================
+        async function handleRegisterForm(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value.trim();
+
             try {
-                showNotification('Cargando eventos...', 'info');
+                showLoading('Creando cuenta...');
+                const auth = firebase.auth();
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 
-                const response = await fetch(API_URL);
-                if (!response.ok) throw new Error('Error al cargar eventos');
+                // Guardar información adicional del usuario en Firestore
+                const db = firebase.firestore();
+                await db.collection('users').doc(userCredential.user.uid).set({
+                    name: name,
+                    email: email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
                 
-                const events = await response.json();
+                showNotification('¡Registro exitoso!', 'success');
+                document.getElementById('registerForm').reset();
+            } catch (error) {
+                console.error('Error en registro:', error);
+                showNotification(getAuthErrorMessage(error.code), 'error');
+            }
+        }
+
+        function getAuthErrorMessage(errorCode) {
+            const messages = {
+                'auth/email-already-in-use': 'El email ya está registrado',
+                'auth/invalid-email': 'Email no válido',
+                'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres',
+                'auth/user-not-found': 'Usuario no encontrado',
+                'auth/wrong-password': 'Contraseña incorrecta'
+            };
+            return messages[errorCode] || 'Ocurrió un error inesperado';
+        }
+
+        // ==============================================
+        //                CRUD DE EVENTOS (FIRESTORE)
+        // ==============================================
+        async function loadEvents() {
+            showLoading('Cargando eventos...');
+            
+            try {
+                const db = firebase.firestore();
+                const snapshot = await db.collection('events').get();
+                const events = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
                 renderEvents(events);
-                
             } catch (error) {
                 console.error('Error cargando eventos:', error);
                 showNotification('No se pudieron cargar los eventos', 'error');
             }
         }
 
-        function renderEvents(events) {
-            const container = document.getElementById('dynamicEvents');
-            const tableBody = document.getElementById('eventsTableBody');
-            
-            if (!container || !tableBody) return;
-
-            // Limpiar contenedores
-            container.innerHTML = '';
-            tableBody.innerHTML = '';
-
-            // Renderizar eventos en tarjetas
-            events.forEach(event => {
-                const raceDiv = document.createElement('div');
-                raceDiv.className = 'race';
-                raceDiv.dataset.id = event.id;
-                
-                raceDiv.innerHTML = `
-                    <img src="${event.imagen_url || 'imagenes/default-race.jpg'}" 
-                         alt="${event.nombre}" 
-                         loading="lazy">
-                    <h2>${event.nombre}</h2>
-                    <p>${event.descripcion}</p>
-                    <div class="race-actions">
-                        <button class="edit-btn" data-id="${event.id}">✏️ Editar</button>
-                        <button class="delete-btn" data-id="${event.id}">🗑️ Eliminar</button>
-                    </div>
-                `;
-                
-                container.appendChild(raceDiv);
-            });
-
-            // Renderizar eventos en tabla
-            events.forEach(event => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${event.nombre}</td>
-                    <td>${event.descripcion}</td>
-                    <td><a href="${event.imagen_url}" target="_blank">Ver imagen</a></td>
-                    <td>
-                        <button class="edit-btn" data-id="${event.id}">Editar</button>
-                        <button class="delete-btn" data-id="${event.id}">Eliminar</button>
-                    </td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
-
-            // Agregar listeners para botones CRUD
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', handleEditEvent);
-            });
-            
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', handleDeleteEvent);
-            });
-        }
-
         async function createEvent(eventData) {
             try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(eventData)
+                showLoading('Creando evento...');
+                const db = firebase.firestore();
+                const docRef = await db.collection('events').add({
+                    ...eventData,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdBy: firebase.auth().currentUser?.uid || 'anonymous'
                 });
-
-                if (!response.ok) throw new Error('Error al crear evento');
                 
-                const newEvent = await response.json();
-                showNotification(`Evento "${newEvent.nombre}" creado con éxito`, 'success');
-                return newEvent;
+                showNotification('Evento creado con éxito', 'success');
+                return { id: docRef.id, ...eventData };
             } catch (error) {
+                console.error('Error creando evento:', error);
+                showNotification('Error al crear evento', 'error');
                 throw error;
             }
         }
 
         async function updateEvent(eventId, eventData) {
             try {
-                const response = await fetch(`${API_URL}/${eventId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(eventData)
-                });
-
-                if (!response.ok) throw new Error('Error al actualizar evento');
+                showLoading('Actualizando evento...');
+                const db = firebase.firestore();
+                await db.collection('events').doc(eventId).update(eventData);
                 
-                const updatedEvent = await response.json();
-                showNotification(`Evento "${updatedEvent.nombre}" actualizado`, 'success');
-                return updatedEvent;
+                showNotification('Evento actualizado', 'success');
+                return { id: eventId, ...eventData };
             } catch (error) {
+                console.error('Error actualizando evento:', error);
+                showNotification('Error al actualizar evento', 'error');
                 throw error;
             }
         }
 
         async function deleteEvent(eventId) {
             try {
-                const response = await fetch(`${API_URL}/${eventId}`, {
-                    method: 'DELETE'
-                });
-
-                if (!response.ok) throw new Error('Error al eliminar evento');
+                showLoading('Eliminando evento...');
+                const db = firebase.firestore();
+                await db.collection('events').doc(eventId).delete();
                 
+                showNotification('Evento eliminado', 'success');
                 return true;
             } catch (error) {
+                console.error('Error eliminando evento:', error);
+                showNotification('Error al eliminar evento', 'error');
                 throw error;
             }
         }
 
+        // ==============================================
+        //                SISTEMA DE CARRITO
+        // ==============================================
+        function initStore() {
+            renderTickets();
+            updateCartUI();
+            
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('add-to-cart')) {
+                    const ticketId = e.target.dataset.id;
+                    addToCart(ticketId);
+                }
+                
+                if (e.target.classList.contains('remove-from-cart')) {
+                    const ticketId = e.target.dataset.id;
+                    removeFromCart(ticketId);
+                }
+            });
+            
+            document.getElementById('checkoutBtn')?.addEventListener('click', proceedToCheckout);
+        }
+
+        function renderTickets() {
+            const container = document.getElementById('ticketsContainer');
+            if (!container) return;
+            
+            container.innerHTML = `
+                <div class="ticket-card">
+                    <h3>Entrada General</h3>
+                    <p>Acceso a todas las carreras del día</p>
+                    <p class="ticket-price">$50.00</p>
+                    <button class="add-to-cart" data-id="general">Añadir al Carrito</button>
+                </div>
+                
+                <div class="ticket-card">
+                    <h3>Entrada VIP</h3>
+                    <p>Acceso VIP + Área exclusiva</p>
+                    <p class="ticket-price">$120.00</p>
+                    <button class="add-to-cart" data-id="vip">Añadir al Carrito</button>
+                </div>
+                
+                <div class="ticket-card">
+                    <h3>Pase de Temporada</h3>
+                    <p>Acceso a todas las carreras del año</p>
+                    <p class="ticket-price">$300.00</p>
+                    <button class="add-to-cart" data-id="season">Añadir al Carrito</button>
+                </div>
+            `;
+        }
+
+        function addToCart(ticketId) {
+            const tickets = {
+                general: { name: 'Entrada General', price: 50, id: 'general' },
+                vip: { name: 'Entrada VIP', price: 120, id: 'vip' },
+                season: { name: 'Pase de Temporada', price: 300, id: 'season' }
+            };
+            
+            cart.push(tickets[ticketId]);
+            updateCartUI();
+            showNotification(`${tickets[ticketId].name} añadida al carrito`, 'success');
+        }
+
+        function removeFromCart(ticketId) {
+            const index = cart.findIndex(item => item.id === ticketId);
+            if (index !== -1) {
+                cart.splice(index, 1);
+                updateCartUI();
+            }
+        }
+
+        function updateCartUI() {
+            const cartItemsEl = document.getElementById('cartItems');
+            const cartCountEl = document.getElementById('cartCount');
+            const cartTotalEl = document.getElementById('cartTotal');
+            
+            if (!cartItemsEl || !cartCountEl || !cartTotalEl) return;
+            
+            const itemCounts = {};
+            cart.forEach(item => {
+                itemCounts[item.name] = (itemCounts[item.name] || 0) + 1;
+            });
+            
+            cartItemsEl.innerHTML = Object.entries(itemCounts)
+                .map(([name, count]) => `
+                    <div class="cart-item">
+                        <span>${name} x${count}</span>
+                        <button class="remove-from-cart" data-id="${name.toLowerCase().replace(' ', '-')}">Eliminar</button>
+                    </div>
+                `).join('');
+            
+            cartCountEl.textContent = cart.length;
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            cartTotalEl.textContent = total.toFixed(2);
+        }
+
+        function proceedToCheckout() {
+            if (cart.length === 0) {
+                showNotification('El carrito está vacío', 'warning');
+                return;
+            }
+            
+            showNotification('Redirigiendo a pasarela de pago...', 'info');
+            // Aquí iría la integración con Stripe/PayPal en un entorno real
+        }
+
+        // ==============================================
+        //                MANEJO DE EVENTOS
+        // ==============================================
+        function setupEventListeners() {
+            const musicBtn = document.getElementById('music-btn');
+            const registerForm = document.getElementById('registerForm');
+            
+            if (musicBtn) musicBtn.addEventListener('click', debounce(toggleMusic, DEBOUNCE_DELAY));
+            if (registerForm) registerForm.addEventListener('submit', handleRegisterForm);
+            
+            window.addEventListener('scroll', handleScroll);
+        }
+
+        function addEventListeners() {
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', debounce(handleEditEvent, DEBOUNCE_DELAY));
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', debounce(handleDeleteEvent, DEBOUNCE_DELAY));
+            });
+        }
+
         async function handleEditEvent(e) {
             const eventId = e.target.dataset.id;
+            
             try {
-                const response = await fetch(`${API_URL}/${eventId}`);
-                if (!response.ok) throw new Error('Error al cargar evento');
+                showLoading('Cargando evento...');
+                const db = firebase.firestore();
+                const doc = await db.collection('events').doc(eventId).get();
                 
-                const event = await response.json();
+                if (!doc.exists) {
+                    throw new Error('Evento no encontrado');
+                }
                 
-                // Llenar formulario con datos del evento
+                const event = { id: doc.id, ...doc.data() };
+                
                 document.getElementById('eventId').value = event.id;
                 document.getElementById('eventName').value = event.nombre;
                 document.getElementById('eventDescription').value = event.descripcion;
                 document.getElementById('eventImage').value = event.imagen_url || '';
                 
                 currentEventId = event.id;
-                modalTitle.textContent = 'Editar Evento';
-                eventModal.style.display = 'block';
-                
+                document.getElementById('modalTitle').textContent = 'Editar Evento';
+                openModal();
             } catch (error) {
-                console.error('Error editando:', error);
+                console.error('Error cargando evento:', error);
                 showNotification('Error al cargar evento para editar', 'error');
             }
         }
@@ -1098,35 +1185,240 @@
             if (!confirm(`¿Eliminar permanentemente el evento "${eventName}"?`)) return;
             
             try {
-                showNotification(`Eliminando evento "${eventName}"...`, 'info');
                 await deleteEvent(eventId);
-                showNotification(`Evento "${eventName}" eliminado`, 'success');
                 
-                // Eliminar de la vista
-                if (e.target.closest('.race')) {
-                    e.target.closest('.race').remove();
-                } else if (e.target.closest('tr')) {
-                    e.target.closest('tr').remove();
+                const eventElement = e.target.closest('.race') || e.target.closest('tr');
+                if (eventElement) {
+                    eventElement.classList.add('fade-out');
+                    setTimeout(() => eventElement.remove(), 300);
+                }
+                
+                if (document.querySelectorAll('.race').length === 0 || 
+                    document.querySelectorAll('tbody tr').length === 0) {
+                    loadEvents();
                 }
             } catch (error) {
-                console.error('Error eliminando:', error);
-                showNotification('Error al eliminar evento', 'error');
+                console.error('Error eliminando evento:', error);
             }
         }
 
         // ==============================================
-        //              UTILIDADES
+        //                MANEJO DE MODAL
+        // ==============================================
+        function initModal() {
+            const addEventBtn = document.getElementById('addEventBtn');
+            const eventModal = document.getElementById('eventModal');
+            const eventForm = document.getElementById('eventForm');
+            
+            if (addEventBtn) {
+                addEventBtn.addEventListener('click', () => {
+                    currentEventId = null;
+                    document.getElementById('modalTitle').textContent = 'Crear Nuevo Evento';
+                    eventForm.reset();
+                    openModal();
+                });
+            }
+
+            document.querySelector('.closeBtn')?.addEventListener('click', closeModal);
+
+            if (eventModal) {
+                eventModal.addEventListener('click', (e) => {
+                    if (e.target === eventModal) {
+                        closeModal();
+                    }
+                });
+            }
+
+            if (eventForm) {
+                eventForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const eventData = {
+                        nombre: document.getElementById('eventName').value.trim(),
+                        descripcion: document.getElementById('eventDescription').value.trim(),
+                        imagen_url: document.getElementById('eventImage').value.trim()
+                    };
+
+                    if (!validateEventForm(eventData)) return;
+
+                    try {
+                        if (currentEventId) {
+                            await updateEvent(currentEventId, eventData);
+                        } else {
+                            await createEvent(eventData);
+                        }
+                        
+                        closeModal();
+                        loadEvents();
+                    } catch (error) {
+                        console.error('Error en el formulario:', error);
+                    }
+                });
+            }
+        }
+
+        function validateEventForm(eventData) {
+            if (!eventData.nombre) {
+                showNotification('El nombre del evento es obligatorio', 'warning');
+                return false;
+            }
+
+            if (!eventData.descripcion) {
+                showNotification('La descripción del evento es obligatoria', 'warning');
+                return false;
+            }
+
+            if (eventData.imagen_url && !isValidUrl(eventData.imagen_url)) {
+                showNotification('La URL de la imagen no es válida', 'warning');
+                return false;
+            }
+
+            return true;
+        }
+
+        function openModal() {
+            const eventModal = document.getElementById('eventModal');
+            if (eventModal) {
+                eventModal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeModal() {
+            const eventModal = document.getElementById('eventModal');
+            if (eventModal) {
+                eventModal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // ==============================================
+        //                RENDERIZADO DE EVENTOS
+        // ==============================================
+        function renderEvents(events) {
+            const container = document.getElementById('dynamicEvents');
+            const tableBody = document.getElementById('eventsTableBody');
+            
+            if (!container || !tableBody) return;
+
+            container.innerHTML = '';
+            tableBody.innerHTML = '';
+
+            if (events.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            events.forEach(event => {
+                const raceDiv = document.createElement('div');
+                raceDiv.className = 'race scroll-animate';
+                raceDiv.dataset.id = event.id;
+                
+                raceDiv.innerHTML = `
+                    <img src="${event.imagen_url || 'imagenes/default-race.jpg'}" 
+                         alt="${event.nombre}" 
+                         loading="lazy">
+                    <div class="race-content">
+                        <h2>${event.nombre}</h2>
+                        <p>${event.descripcion}</p>
+                        <div class="race-actions">
+                            <button class="edit-btn" data-id="${event.id}">✏️ Editar</button>
+                            <button class="delete-btn" data-id="${event.id}">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(raceDiv);
+            });
+
+            events.forEach(event => {
+                const row = document.createElement('tr');
+                row.className = 'scroll-animate';
+                row.innerHTML = `
+                    <td>${event.nombre}</td>
+                    <td>${event.descripcion}</td>
+                    <td>
+                        ${event.imagen_url ? 
+                            `<a href="${event.imagen_url}" target="_blank" rel="noopener noreferrer">Ver imagen</a>` : 
+                            'Sin imagen'}
+                    </td>
+                    <td class="actions-cell">
+                        <button class="edit-btn" data-id="${event.id}">Editar</button>
+                        <button class="delete-btn" data-id="${event.id}">Eliminar</button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+
+            addEventListeners();
+        }
+
+        function showEmptyState() {
+            const container = document.getElementById('dynamicEvents');
+            if (container) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No hay eventos disponibles</h3>
+                        <p>Crea tu primer evento usando el botón "Añadir Evento"</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ==============================================
+        //                NOTIFICACIONES
         // ==============================================
         function showNotification(message, type = 'info') {
             const toast = document.getElementById('toast');
             if (!toast) return;
 
+            toast.className = 'toast';
+            void toast.offsetWidth; // Trigger reflow
+
             toast.textContent = message;
-            toast.className = 'toast show ' + type;
+            toast.classList.add('show', type);
             
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
+        }
+
+        function showLoading(message) {
+            console.log(message); // En producción podrías mostrar un spinner
+        }
+
+        // ==============================================
+        //                ANIMACIONES
+        // ==============================================
+        function initAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.scroll-animate').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        function handleScroll() {
+            // Lógica adicional de scroll si es necesaria
+        }
+
+        // ==============================================
+        //                UTILIDADES
+        // ==============================================
+        function debounce(func, delay) {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func.apply(this, args), delay);
+            };
         }
 
         function validateEmail(email) {
@@ -1134,34 +1426,24 @@
             return re.test(email);
         }
 
-        // Animaciones con Intersection Observer
-        function initAnimations() {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                        observer.unobserve(entry.target);
-                    }
-                });
-            }, { threshold: 0.1 });
-
-            document.querySelectorAll('.race, .contact-section, footer, .hero-content, .register-form, .events-table').forEach(el => {
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(20px)';
-                el.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
-                observer.observe(el);
-            });
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
         }
 
-        // Manejo de errores global
+        // ==============================================
+        //                MANEJO DE ERRORES
+        // ==============================================
         window.addEventListener('error', (e) => {
             console.error('Error global:', e.message);
             showNotification('Ocurrió un error inesperado', 'error');
             return true;
         });
 
-        // Manejo de promesas no capturadas
         window.addEventListener('unhandledrejection', (e) => {
             console.error('Error no capturado:', e.reason);
             showNotification('Ocurrió un error inesperado', 'error');
