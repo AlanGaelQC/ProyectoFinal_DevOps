@@ -10,7 +10,64 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-analytics-compat.js"></script>
     <style>
+        /* LOGIN SCREEN STYLES */
+        #loginScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #111;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            color: white;
+        }
+        
+        #loginScreen h2 {
+            color: #ff4d00;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        
+        #loginScreen input {
+            padding: 12px 15px;
+            margin: 8px 0;
+            width: 300px;
+            border-radius: 5px;
+            border: none;
+            background: #333;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        #loginScreen button {
+            padding: 12px 30px;
+            background-color: #ff4d00;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Orbitron', sans-serif;
+            transition: background 0.3s;
+            margin-top: 15px;
+        }
+        
+        #loginScreen button:hover {
+            background-color: #e63e00;
+        }
+        
+        #loginError {
+            margin-top: 15px;
+            color: #ff3333;
+            font-size: 14px;
+        }
+
         /* RESET Y BASE */
         * {
             margin: 0;
@@ -658,142 +715,148 @@
                 padding: 5px 8px;
                 font-size: 12px;
             }
+            
+            #loginScreen input {
+                width: 90%;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- LOGIN FORM (invisible si ya estás logueado) -->
-<div id="loginScreen" style="display: none; text-align: center; padding: 50px;">
-  <h2>Inicia sesión</h2>
-  <input type="email" id="loginEmail" placeholder="Correo"><br><br>
-  <input type="password" id="loginPassword" placeholder="Contraseña"><br><br>
-  <button onclick="loginUsuario()">Entrar</button>
-  <p id="loginError" style="color: red;"></p>
-</div>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen">
+        <h2>Inicia sesión</h2>
+        <input type="email" id="loginEmail" placeholder="Correo">
+        <input type="password" id="loginPassword" placeholder="Contraseña">
+        <button onclick="loginUsuario()">Entrar</button>
+        <p id="loginError"></p>
+    </div>
 
+    <!-- MAIN CONTENT (hidden by default) -->
+    <div id="mainContent" style="display: none;">
+        <!-- NAVIGATION -->
+        <nav class="navbar">
+            <div class="logo">Born to Race</div>
+            <ul class="nav-links">
+                <li><a href="#hero">Home</a></li>
+                <li><a href="#races">Races</a></li>
+                <li><a href="#register">Register</a></li>
+                <li><a href="#store">Tickets</a></li>
+            </ul>
+        </nav>
 
-    <!-- NAVIGATION -->
-    <nav class="navbar">
-        <div class="logo">Born to Race</div>
-        <ul class="nav-links">
-            <li><a href="#hero">Home</a></li>
-            <li><a href="#races">Races</a></li>
-            <li><a href="#register">Register</a></li>
-            <li><a href="#store">Tickets</a></li>
-        </ul>
-    </nav>
+        <!-- HERO SECTION -->
+        <section id="hero" class="hero">
+            <div class="hero-content">
+                <h1>Born to Race</h1>
+                <p>Speed isn't everything. It's the only thing.</p>
+                <button id="music-btn">🎵 Play Music</button>
+            </div>
+        </section>
 
-    <!-- HERO SECTION -->
-    <section id="hero" class="hero">
-        <div class="hero-content">
-            <h1>Born to Race</h1>
-            <p>Speed isn't everything. It's the only thing.</p>
-            <button id="music-btn">🎵 Play Music</button>
-        </div>
-    </section>
-
-    <!-- RACES SECTION -->
-    <section id="races" class="races-container">
-        <!-- Primer grupo de 4 carreras -->
-        <div class="top-races">
-            <div class="race">
-                <img src="imagenes/fastandfurios.jpg" alt="Fast and Furious">
-                <h2>Fast & Furious</h2>
-                <p>Street racing legends collide in the urban jungle.</p>
-            </div>
-            <div class="race">
-                <img src="imagenes/OIP (1).jpeg" alt="Tokyo Drift Challenge">
-                <h2>Tokyo Drift Challenge</h2>
-                <p>Drift through neon-lit streets with ultimate precision.</p>
-            </div>
-            <div class="race">
-                <img src="imagenes/ProStreet.png" alt="ProStreet Legacy">
-                <h2>ProStreet Legacy</h2>
-                <p>From track to fame, dominate the circuit.</p>
-            </div>
-            <div class="race">
-                <img src="imagenes/wp4306463.webp" alt="Drag Rivals">
-                <h2>Drag Rivals</h2>
-                <p>Pure acceleration — prove who's king of the quarter mile.</p>
-            </div>
-        </div>
-        
-        <!-- Tabla CRUD de eventos -->
-        <div class="events-table">
-            <button id="addEventBtn" class="submit-btn">➕ Add Event</button>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Image</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="eventsTableBody">
-                    <!-- Eventos se cargarán aquí dinámicamente -->
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Segundo grupo de carreras (se llenará dinámicamente) -->
-        <div class="bottom-races" id="dynamicEvents">
-            <!-- Eventos dinámicos se cargarán aquí -->
-        </div>
-    </section>
-
-    <!-- REGISTER SECTION -->
-    <section id="register" class="register-section">
-        <h2>Register Now</h2>
-        <form id="registerForm" class="register-form">
-            <div class="form-group">
-                <label for="name">Full Name:</label>
-                <input type="text" id="name" placeholder="Enter your full name" required>
-            </div>
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" placeholder="Enter your email" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" id="password" placeholder="Create a password" minlength="6" required>
-            </div>
-            <button type="submit" class="submit-btn">Create Account</button>
-        </form>
-    </section>
-
-    <!-- STORE SECTION -->
-    <section id="store" class="store-section">
-        <div class="store-wrapper">
-            <h2 class="store-title">Compra tus Entradas</h2>
-            
-            <div class="tickets-grid" id="ticketsContainer">
-                <!-- Tickets se cargarán dinámicamente -->
-            </div>
-            
-            <div class="cart-container">
-                <h3>Tu Carrito <span id="cartCount">0</span></h3>
-                <div id="cartItems"></div>
-                <div class="cart-total">
-                    Total: $<span id="cartTotal">0.00</span>
+        <!-- RACES SECTION -->
+        <section id="races" class="races-container">
+            <!-- Primer grupo de 4 carreras -->
+            <div class="top-races">
+                <div class="race">
+                    <img src="imagenes/fastandfurios.jpg" alt="Fast and Furious">
+                    <h2>Fast & Furious</h2>
+                    <p>Street racing legends collide in the urban jungle.</p>
                 </div>
-                <button id="checkoutBtn" class="checkout-btn">Proceder al Pago</button>
+                <div class="race">
+                    <img src="imagenes/OIP (1).jpeg" alt="Tokyo Drift Challenge">
+                    <h2>Tokyo Drift Challenge</h2>
+                    <p>Drift through neon-lit streets with ultimate precision.</p>
+                </div>
+                <div class="race">
+                    <img src="imagenes/ProStreet.png" alt="ProStreet Legacy">
+                    <h2>ProStreet Legacy</h2>
+                    <p>From track to fame, dominate the circuit.</p>
+                </div>
+                <div class="race">
+                    <img src="imagenes/wp4306463.webp" alt="Drag Rivals">
+                    <h2>Drag Rivals</h2>
+                    <p>Pure acceleration — prove who's king of the quarter mile.</p>
+                </div>
             </div>
-        </div>
-    </section>
+            
+            <!-- Tabla CRUD de eventos -->
+            <div class="events-table">
+                <button id="addEventBtn" class="submit-btn">➕ Add Event</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Image</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventsTableBody">
+                        <!-- Eventos se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Segundo grupo de carreras (se llenará dinámicamente) -->
+            <div class="bottom-races" id="dynamicEvents">
+                <!-- Eventos dinámicos se cargarán aquí -->
+            </div>
+        </section>
 
-    <!-- FOOTER -->
-    <footer>
-        <div class="footer-content">
-            <p>© 2025 Born to Race. All rights reserved.</p>
-            <div class="footer-links">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-                <a href="mailto:contact@borntorace.com">Contact Us</a>
+        <!-- REGISTER SECTION -->
+        <section id="register" class="register-section">
+            <h2>Register Now</h2>
+            <form id="registerForm" class="register-form">
+                <div class="form-group">
+                    <label for="name">Full Name:</label>
+                    <input type="text" id="name" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" placeholder="Create a password" minlength="6" required>
+                </div>
+                <button type="submit" class="submit-btn">Create Account</button>
+            </form>
+        </section>
+
+        <!-- STORE SECTION -->
+        <section id="store" class="store-section">
+            <div class="store-wrapper">
+                <h2 class="store-title">Compra tus Entradas</h2>
+                
+                <div class="tickets-grid" id="ticketsContainer">
+                    <!-- Tickets se cargarán dinámicamente -->
+                </div>
+                
+                <div class="cart-container">
+                    <h3>Tu Carrito <span id="cartCount">0</span></h3>
+                    <div id="cartItems"></div>
+                    <div class="cart-total">
+                        Total: $<span id="cartTotal">0.00</span>
+                    </div>
+                    <button id="checkoutBtn" class="checkout-btn">Proceder al Pago</button>
+                </div>
             </div>
-            <p>DevOps Final Project - [Equipo 6]</p>
-        </div>
-    </footer>
+        </section>
+
+        <!-- FOOTER -->
+        <footer>
+            <div class="footer-content">
+                <p>© 2025 Born to Race. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="mailto:contact@borntorace.com">Contact Us</a>
+                </div>
+                <p>DevOps Final Project - [Equipo 6]</p>
+            </div>
+        </footer>
+    </div>
 
     <!-- MUSIC AUDIO -->
     <audio id="bg-music" src="audio/ProMusic.mp3" loop></audio>
@@ -823,20 +886,20 @@
         // ==============================================
         const MUSIC_VOLUME = 0.3;
         const DEBOUNCE_DELAY = 300;
-        
+
         const firebaseConfig = {
-  apiKey: "AIzaSyDliwZ114VGWK_2wA9agciV2DuB1F-Baro",
-  authDomain: "burntorace-5ddb1.firebaseapp.com",
-  projectId: "burntorace-5ddb1",
-  storageBucket: "burntorace-5ddb1.appspot.com",
-  messagingSenderId: "623988173896",
-  appId: "1:623988173896:web:d970debd1192c4df2c3c7d",
-  measurementId: "G-5PW6LY0PBF"
-};
+            apiKey: "AIzaSyDliwZ114VGWK_2wA9agciV2DuB1F-Baro",
+            authDomain: "burntorace-5ddb1.firebaseapp.com",
+            projectId: "burntorace-5ddb1",
+            storageBucket: "burntorace-5ddb1.appspot.com",
+            messagingSenderId: "623988173896",
+            appId: "1:623988173896:web:d970debd1192c4df2c3c7d",
+            measurementId: "G-5PW6LY0PBF"
+        };
 
-firebase.initializeApp(firebaseConfig);
-firebase.analytics();
-
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        firebase.analytics();
 
         // ==============================================
         //                VARIABLES GLOBALES
@@ -850,27 +913,47 @@ firebase.analytics();
         //                INICIALIZACIÓN
         // ==============================================
         document.addEventListener('DOMContentLoaded', () => {
-            // Inicializar Firebase
-            firebase.initializeApp(firebaseConfig);
-            const db = firebase.firestore();
-            const auth = firebase.auth();
-            
-            initAudio();
-            loadEvents();
-            initModal();
-            initAnimations();
-            setupEventListeners();
-            initStore();
-            
-            // Escuchar cambios de autenticación
-            auth.onAuthStateChanged(user => {
+            // Configura el observador de autenticación
+            firebase.auth().onAuthStateChanged((user) => {
+                const loginScreen = document.getElementById("loginScreen");
+                const mainContent = document.getElementById("mainContent");
+
                 if (user) {
-                    console.log("Usuario logueado:", user.email);
+                    loginScreen.style.display = "none";
+                    mainContent.style.display = "block";
+                    
+                    // Inicializar el resto de la aplicación
+                    initAudio();
+                    loadEvents();
+                    initModal();
+                    initAnimations();
+                    setupEventListeners();
+                    initStore();
                 } else {
-                    console.log("Usuario no logueado");
+                    loginScreen.style.display = "flex";
+                    mainContent.style.display = "none";
                 }
             });
         });
+
+        // ==============================================
+        //                MANEJO DE LOGIN
+        // ==============================================
+        async function loginUsuario() {
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value.trim();
+            const loginError = document.getElementById("loginError");
+
+            try {
+                loginError.textContent = "";
+                await firebase.auth().signInWithEmailAndPassword(email, password);
+                showNotification('Inicio de sesión exitoso', 'success');
+            } catch (error) {
+                console.error("Error de autenticación:", error);
+                loginError.textContent = getAuthErrorMessage(error.code);
+                showNotification('Error al iniciar sesión', 'error');
+            }
+        }
 
         // ==============================================
         //                MANEJO DE AUDIO
@@ -1091,7 +1174,7 @@ firebase.analytics();
                 season: { name: 'Pase de Temporada', price: 300, id: 'season' }
             };
             
-            cart.push(tickets[ticketId]);
+            cart.push(tickets                [ticketId]);
             updateCartUI();
             showNotification(`${tickets[ticketId].name} añadida al carrito`, 'success');
         }
@@ -1101,6 +1184,7 @@ firebase.analytics();
             if (index !== -1) {
                 cart.splice(index, 1);
                 updateCartUI();
+                showNotification('Artículo removido del carrito', 'success');
             }
         }
 
@@ -1109,199 +1193,70 @@ firebase.analytics();
             const cartCountEl = document.getElementById('cartCount');
             const cartTotalEl = document.getElementById('cartTotal');
             
-            if (!cartItemsEl || !cartCountEl || !cartTotalEl) return;
+            // Agrupar items por tipo
+            const groupedCart = cart.reduce((acc, item) => {
+                acc[item.id] = (acc[item.id] || 0) + 1;
+                return acc;
+            }, {});
             
-            const itemCounts = {};
-            cart.forEach(item => {
-                itemCounts[item.name] = (itemCounts[item.name] || 0) + 1;
-            });
+            // Calcular total
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
             
-            cartItemsEl.innerHTML = Object.entries(itemCounts)
-                .map(([name, count]) => `
-                    <div class="cart-item">
-                        <span>${name} x${count}</span>
-                        <button class="remove-from-cart" data-id="${name.toLowerCase().replace(' ', '-')}">Eliminar</button>
-                    </div>
-                `).join('');
+            // Renderizar items
+            cartItemsEl.innerHTML = Object.entries(groupedCart)
+                .map(([id, quantity]) => {
+                    const ticket = {
+                        general: { name: 'Entrada General', price: 50 },
+                        vip: { name: 'Entrada VIP', price: 120 },
+                        season: { name: 'Pase de Temporada', price: 300 }
+                    }[id];
+                    
+                    return `
+                        <div class="cart-item">
+                            <span>${ticket.name} x${quantity}</span>
+                            <span>$${(ticket.price * quantity).toFixed(2)}</span>
+                            <button class="remove-from-cart" data-id="${id}">Eliminar</button>
+                        </div>
+                    `;
+                })
+                .join('');
             
             cartCountEl.textContent = cart.length;
-            const total = cart.reduce((sum, item) => sum + item.price, 0);
             cartTotalEl.textContent = total.toFixed(2);
         }
 
-        function proceedToCheckout() {
+        async function proceedToCheckout() {
             if (cart.length === 0) {
                 showNotification('El carrito está vacío', 'warning');
                 return;
             }
             
-            showNotification('Redirigiendo a pasarela de pago...', 'info');
-            // Aquí iría la integración con Stripe/PayPal en un entorno real
-        }
-
-        // ==============================================
-        //                MANEJO DE EVENTOS
-        // ==============================================
-        function setupEventListeners() {
-            const musicBtn = document.getElementById('music-btn');
-            const registerForm = document.getElementById('registerForm');
-            
-            if (musicBtn) musicBtn.addEventListener('click', debounce(toggleMusic, DEBOUNCE_DELAY));
-            if (registerForm) registerForm.addEventListener('submit', handleRegisterForm);
-            
-            window.addEventListener('scroll', handleScroll);
-        }
-
-        function addEventListeners() {
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', debounce(handleEditEvent, DEBOUNCE_DELAY));
-            });
-            
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', debounce(handleDeleteEvent, DEBOUNCE_DELAY));
-            });
-        }
-
-        async function handleEditEvent(e) {
-            const eventId = e.target.dataset.id;
-            
             try {
-                showLoading('Cargando evento...');
+                showLoading('Procesando pago...');
+                
+                // Simular procesamiento de pago
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Guardar la transacción en Firestore
                 const db = firebase.firestore();
-                const doc = await db.collection('events').doc(eventId).get();
+                const user = firebase.auth().currentUser;
                 
-                if (!doc.exists) {
-                    throw new Error('Evento no encontrado');
-                }
+                await db.collection('transactions').add({
+                    userId: user?.uid || 'anonymous',
+                    items: cart,
+                    total: cart.reduce((sum, item) => sum + item.price, 0),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    status: 'completed'
+                });
                 
-                const event = { id: doc.id, ...doc.data() };
+                // Limpiar carrito
+                cart = [];
+                updateCartUI();
                 
-                document.getElementById('eventId').value = event.id;
-                document.getElementById('eventName').value = event.nombre;
-                document.getElementById('eventDescription').value = event.descripcion;
-                document.getElementById('eventImage').value = event.imagen_url || '';
-                
-                currentEventId = event.id;
-                document.getElementById('modalTitle').textContent = 'Editar Evento';
-                openModal();
+                showNotification('¡Compra realizada con éxito!', 'success');
             } catch (error) {
-                console.error('Error cargando evento:', error);
-                showNotification('Error al cargar evento para editar', 'error');
-            }
-        }
-
-        async function handleDeleteEvent(e) {
-            const eventId = e.target.dataset.id;
-            const eventName = e.target.closest('.race')?.querySelector('h2')?.textContent || 
-                             e.target.closest('tr')?.querySelector('td:first-child')?.textContent;
-            
-            if (!confirm(`¿Eliminar permanentemente el evento "${eventName}"?`)) return;
-            
-            try {
-                await deleteEvent(eventId);
-                
-                const eventElement = e.target.closest('.race') || e.target.closest('tr');
-                if (eventElement) {
-                    eventElement.classList.add('fade-out');
-                    setTimeout(() => eventElement.remove(), 300);
-                }
-                
-                if (document.querySelectorAll('.race').length === 0 || 
-                    document.querySelectorAll('tbody tr').length === 0) {
-                    loadEvents();
-                }
-            } catch (error) {
-                console.error('Error eliminando evento:', error);
-            }
-        }
-
-        // ==============================================
-        //                MANEJO DE MODAL
-        // ==============================================
-        function initModal() {
-            const addEventBtn = document.getElementById('addEventBtn');
-            const eventModal = document.getElementById('eventModal');
-            const eventForm = document.getElementById('eventForm');
-            
-            if (addEventBtn) {
-                addEventBtn.addEventListener('click', () => {
-                    currentEventId = null;
-                    document.getElementById('modalTitle').textContent = 'Crear Nuevo Evento';
-                    eventForm.reset();
-                    openModal();
-                });
-            }
-
-            document.querySelector('.closeBtn')?.addEventListener('click', closeModal);
-
-            if (eventModal) {
-                eventModal.addEventListener('click', (e) => {
-                    if (e.target === eventModal) {
-                        closeModal();
-                    }
-                });
-            }
-
-            if (eventForm) {
-                eventForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    
-                    const eventData = {
-                        nombre: document.getElementById('eventName').value.trim(),
-                        descripcion: document.getElementById('eventDescription').value.trim(),
-                        imagen_url: document.getElementById('eventImage').value.trim()
-                    };
-
-                    if (!validateEventForm(eventData)) return;
-
-                    try {
-                        if (currentEventId) {
-                            await updateEvent(currentEventId, eventData);
-                        } else {
-                            await createEvent(eventData);
-                        }
-                        
-                        closeModal();
-                        loadEvents();
-                    } catch (error) {
-                        console.error('Error en el formulario:', error);
-                    }
-                });
-            }
-        }
-
-        function validateEventForm(eventData) {
-            if (!eventData.nombre) {
-                showNotification('El nombre del evento es obligatorio', 'warning');
-                return false;
-            }
-
-            if (!eventData.descripcion) {
-                showNotification('La descripción del evento es obligatoria', 'warning');
-                return false;
-            }
-
-            if (eventData.imagen_url && !isValidUrl(eventData.imagen_url)) {
-                showNotification('La URL de la imagen no es válida', 'warning');
-                return false;
-            }
-
-            return true;
-        }
-
-        function openModal() {
-            const eventModal = document.getElementById('eventModal');
-            if (eventModal) {
-                eventModal.style.display = 'block';
-                document.body.style.overflow = 'hidden';
-            }
-        }
-
-        function closeModal() {
-            const eventModal = document.getElementById('eventModal');
-            if (eventModal) {
-                eventModal.style.display = 'none';
-                document.body.style.overflow = 'auto';
+                console.error('Error en el pago:', error);
+                showNotification('Error al procesar el pago', 'error');
             }
         }
 
@@ -1309,74 +1264,134 @@ firebase.analytics();
         //                RENDERIZADO DE EVENTOS
         // ==============================================
         function renderEvents(events) {
-            const container = document.getElementById('dynamicEvents');
             const tableBody = document.getElementById('eventsTableBody');
+            const dynamicEvents = document.getElementById('dynamicEvents');
             
-            if (!container || !tableBody) return;
-
-            container.innerHTML = '';
+            // Limpiar contenido existente
             tableBody.innerHTML = '';
-
-            if (events.length === 0) {
-                showEmptyState();
-                return;
-            }
-
-            events.forEach(event => {
-                const raceDiv = document.createElement('div');
-                raceDiv.className = 'race scroll-animate';
-                raceDiv.dataset.id = event.id;
-                
-                raceDiv.innerHTML = `
-                    <img src="${event.imagen_url || 'imagenes/default-race.jpg'}" 
-                         alt="${event.nombre}" 
-                         loading="lazy">
-                    <div class="race-content">
-                        <h2>${event.nombre}</h2>
-                        <p>${event.descripcion}</p>
-                        <div class="race-actions">
-                            <button class="edit-btn" data-id="${event.id}">✏️ Editar</button>
-                            <button class="delete-btn" data-id="${event.id}">🗑️ Eliminar</button>
-                        </div>
-                    </div>
-                `;
-                
-                container.appendChild(raceDiv);
-            });
-
+            dynamicEvents.innerHTML = '';
+            
+            // Renderizar tabla
             events.forEach(event => {
                 const row = document.createElement('tr');
-                row.className = 'scroll-animate';
                 row.innerHTML = `
-                    <td>${event.nombre}</td>
-                    <td>${event.descripcion}</td>
+                    <td>${event.name}</td>
+                    <td>${event.description}</td>
+                    <td>${event.image ? '✅' : '❌'}</td>
                     <td>
-                        ${event.imagen_url ? 
-                            `<a href="${event.imagen_url}" target="_blank" rel="noopener noreferrer">Ver imagen</a>` : 
-                            'Sin imagen'}
-                    </td>
-                    <td class="actions-cell">
                         <button class="edit-btn" data-id="${event.id}">Editar</button>
                         <button class="delete-btn" data-id="${event.id}">Eliminar</button>
                     </td>
                 `;
-                
                 tableBody.appendChild(row);
             });
-
-            addEventListeners();
+            
+            // Renderizar tarjetas dinámicas
+            events.forEach(event => {
+                if (!event.image) return;
+                
+                const raceCard = document.createElement('div');
+                raceCard.className = 'race';
+                raceCard.innerHTML = `
+                    <img src="${event.image}" alt="${event.name}">
+                    <h2>${event.name}</h2>
+                    <p>${event.description}</p>
+                `;
+                dynamicEvents.appendChild(raceCard);
+            });
         }
 
-        function showEmptyState() {
-            const container = document.getElementById('dynamicEvents');
-            if (container) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <h3>No hay eventos disponibles</h3>
-                        <p>Crea tu primer evento usando el botón "Añadir Evento"</p>
-                    </div>
-                `;
-            }
+        // ==============================================
+        //                MANEJO DEL MODAL
+        // ==============================================
+        function initModal() {
+            const modal = document.getElementById('eventModal');
+            const closeBtn = document.querySelector('.closeBtn');
+            const addEventBtn = document.getElementById('addEventBtn');
+            
+            // Abrir modal para añadir evento
+            addEventBtn.addEventListener('click', () => {
+                currentEventId = null;
+                document.getElementById('modalTitle').textContent = 'Añadir Nuevo Evento';
+                document.getElementById('eventForm').reset();
+                modal.style.display = 'block';
+            });
+            
+            // Cerrar modal
+            closeBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+            
+            // Cerrar al hacer clic fuera
+            window.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+            
+            // Manejar envío del formulario
+            document.getElementById('eventForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const eventData = {
+                    name: document.getElementById('eventName').value.trim(),
+                    description: document.getElementById('eventDescription').value.trim(),
+                    image: document.getElementById('eventImage').value.trim() || null
+                };
+                
+                try {
+                    if (currentEventId) {
+                        await updateEvent(currentEventId, eventData);
+                    } else {
+                        await createEvent(eventData);
+                    }
+                    
+                    modal.style.display = 'none';
+                    loadEvents();
+                } catch (error) {
+                    console.error('Error guardando evento:', error);
+                }
+            });
+            
+            // Delegación de eventos para botones de editar/eliminar
+            document.getElementById('eventsTableBody').addEventListener('click', async (e) => {
+                const eventId = e.target.dataset.id;
+                
+                if (e.target.classList.contains('edit-btn')) {
+                    try {
+                        showLoading('Cargando evento...');
+                        const db = firebase.firestore();
+                        const doc = await db.collection('events').doc(eventId).get();
+                        
+                        if (doc.exists) {
+                            const event = doc.data();
+                            currentEventId = eventId;
+                            
+                            document.getElementById('modalTitle').textContent = 'Editar Evento';
+                            document.getElementById('eventId').value = eventId;
+                            document.getElementById('eventName').value = event.name;
+                            document.getElementById('eventDescription').value = event.description;
+                            document.getElementById('eventImage').value = event.image || '';
+                            
+                            modal.style.display = 'block';
+                        }
+                    } catch (error) {
+                        console.error('Error cargando evento:', error);
+                        showNotification('Error al cargar evento', 'error');
+                    }
+                }
+                
+                if (e.target.classList.contains('delete-btn')) {
+                    if (confirm('¿Estás seguro de eliminar este evento?')) {
+                        try {
+                            await deleteEvent(eventId);
+                            loadEvents();
+                        } catch (error) {
+                            console.error('Error eliminando evento:', error);
+                        }
+                    }
+                }
+            });
         }
 
         // ==============================================
@@ -1384,13 +1399,9 @@ firebase.analytics();
         // ==============================================
         function showNotification(message, type = 'info') {
             const toast = document.getElementById('toast');
-            if (!toast) return;
-
-            toast.className = 'toast';
-            void toast.offsetWidth; // Trigger reflow
-
             toast.textContent = message;
-            toast.classList.add('show', type);
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
             
             setTimeout(() => {
                 toast.classList.remove('show');
@@ -1398,81 +1409,35 @@ firebase.analytics();
         }
 
         function showLoading(message) {
-            console.log(message); // En producción podrías mostrar un spinner
+            // Implementación simple - podrías usar una librería más completa
+            console.log(message);
         }
 
         // ==============================================
         //                ANIMACIONES
         // ==============================================
         function initAnimations() {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('animate');
-                        observer.unobserve(entry.target);
-                    }
+            // Efecto de scroll suave
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
                 });
-            }, { threshold: 0.1 });
-
-            document.querySelectorAll('.scroll-animate').forEach(el => {
-                observer.observe(el);
             });
         }
 
-        function handleScroll() {
-            // Lógica adicional de scroll si es necesaria
-        }
-
         // ==============================================
-        //                UTILIDADES
+        //                EVENT LISTENERS
         // ==============================================
-        function debounce(func, delay) {
-            let timeoutId;
-            return function(...args) {
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(() => func.apply(this, args), delay);
-            };
+        function setupEventListeners() {
+            // Botón de música
+            document.getElementById('music-btn').addEventListener('click', toggleMusic);
+            
+            // Formulario de registro
+            document.getElementById('registerForm').addEventListener('submit', handleRegisterForm);
         }
-
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-
-        function isValidUrl(string) {
-            try {
-                new URL(string);
-                return true;
-            } catch (_) {
-                return false;
-            }
-        }
-
-        // ==============================================
-        //                MANEJO DE ERRORES
-        // ==============================================
-        window.addEventListener('error', (e) => {
-            console.error('Error global:', e.message);
-            showNotification('Ocurrió un error inesperado', 'error');
-            return true;
-        });
-
-        window.addEventListener('unhandledrejection', (e) => {
-            console.error('Error no capturado:', e.reason);
-            showNotification('Ocurrió un error inesperado', 'error');
-            e.preventDefault();
-        });
     </script>
-    <!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js"></script>
-
-<!-- Tus scripts -->
-<script src="Activos/JS/firebase-config.js"></script>
-<script src="Activos/JS/script.js"></script>
-
 </body>
 </html>
