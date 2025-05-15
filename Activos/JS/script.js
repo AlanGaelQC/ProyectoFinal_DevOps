@@ -865,3 +865,29 @@ window.addEventListener('unhandledrejection', (e) => {
     showNotification('Ocurrió un error inesperado', 'error');
     e.preventDefault();
 });
+
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    // Usuario logueado, mostrar la página
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("mainContent").style.display = "block";
+  } else {
+    // No logueado, mostrar login
+    document.getElementById("loginScreen").style.display = "block";
+    document.getElementById("mainContent").style.display = "none";
+  }
+});
+
+async function loginUsuario() {
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
+  const errorMsg = document.getElementById("loginError");
+
+  try {
+    await firebase.auth().signInWithEmailAndPassword(email, password);
+    errorMsg.textContent = "";
+  } catch (error) {
+    console.error(error);
+    errorMsg.textContent = "Correo o contraseña incorrectos.";
+  }
+}
